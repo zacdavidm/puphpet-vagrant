@@ -1,0 +1,27 @@
+#/bin/bash
+# where am i? move to where I am. This ensures source is properly sourced
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd $DIR
+
+while [ $# -gt 0 ]; do
+  ARGUMENT=$1 # example --name=value
+
+  ARGUMENT=$(sed 's/=.*$//g' <<< "$ARGUMENT")
+  ARGUMENT=$(sed 's/--//g' <<< "$ARGUMENT")
+
+  VALUE="${1#*=}"
+  case $ARGUMENT in
+  "action")
+    ARG_ACTION=$VALUE
+    ;;
+  "folder")
+    ARG_FOLDER=$VALUE
+    ;;
+  esac
+  shift
+done
+
+if [[ $ARG_ACTION == "sync" ]]; then
+  echo "syncing to vagrant machine"
+  rsync -azPv --exclude=".git" -e "vagrant ssh --" $DIR/$ARG_FOLDER/ :/var/www/
+fi
