@@ -17,6 +17,9 @@ while [ $# -gt 0 ]; do
   "folder")
     ARG_FOLDER=$VALUE
     ;;
+  "shortname")
+    ARG_SHORTNAME=$VALUE
+    ;;
   esac
   shift
 done
@@ -24,4 +27,14 @@ done
 if [[ $ARG_ACTION == "sync" ]]; then
   echo "syncing to vagrant machine"
   rsync -azPv --exclude=".git" -e "vagrant ssh --" $DIR/$ARG_FOLDER/ :/var/www/
+fi
+
+if [[ $ARG_ACTION == "vhost" ]]; then
+  # TODO: Need to add a vhost file on vm to point to /var/www/$SHORTNAME folder  
+  echo "echoing vagrant ip:"
+  VM_IP=$(cat $DIR/puphpet/config.yaml | grep 'private_network: ' | sed -e 's/^.*private_network: //' -e 's/\/.*$//')
+  echo $VM_IP
+  LOCAL_DOMAIN="vagrant-$ARG_SHORTNAME.local"
+  HOSTS_LINE="$VM_IP  $LOCAL_DOMAIN"
+  $(grep "$HOSTS_LINE" /etc/hosts) || sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts"
 fi
