@@ -25,12 +25,41 @@ while [ $# -gt 0 ]; do
 done
 
 if [[ $ARG_ACTION == "sync" ]]; then
-  echo "syncing to vagrant machine"
-  rsync -azPv --exclude=".git" -e "vagrant ssh --" $DIR/$ARG_FOLDER/ :/var/www/
+  echo "Syncing from vagrant to web directory"
+  SOURCE="/vagrant/www/$ARG_FOLDER/"
+  DESTINATION="/var/www/$ARG_FOLDER/"
+  #VAGRANT SSH
+  echo "#################################"
+vagrant ssh -- -T << SYNC
+sudo rsync --chmod=ug+rwX -rtlp $SOURCE $DESTINATION
+SYNC
+  echo "#################################"
+
+  #/VAGRANT SSH
 fi
 
 if [[ $ARG_ACTION == "vhost" ]]; then
-  # TODO: Need to add a vhost file on vm to point to /var/www/$SHORTNAME folder  
+  # REQURED PARAMS:
+  # --action=vhost
+  # --shortname=
+  # --folder=
+  # cp vhost-template.conf to new site conf
+  SITE_CONF="vagrant-$ARG_SHORTNAME.local.conf"
+  cp vhost-template.conf $SITE_CONF
+  # replace 'REPLACESHORTNAME' with $ARG_SHORTNAME and
+  sed -i s/REPLACESHORTNAME/$ARG_SHORTNAME/g $SITE_CONF
+  # replace 'REPLACEFOLDER' with $ARG_FOLDER in vhost file
+  sed -i s/REPLACEFOLDER/$ARG_FOLDER/g $SITE_CONF
+
+vagrant ssh -- -T << VHOST
+cd /vagrant
+# mv new site conf to /etc/apache2/sites-available
+sudo mv $SITE_CONF /etc/apache2/sites-available/$SITE_CONF
+# enable the newly created site/vhost
+sudo a2ensite $SITE_CONF
+# reload apache2 so vhosts take effect
+sudo service apache2 restart
+VHOST
   echo "echoing vagrant ip:"
   VM_IP=$(cat $DIR/puphpet/config.yaml | grep 'private_network: ' | sed -e 's/^.*private_network: //' -e 's/\/.*$//')
   echo $VM_IP
