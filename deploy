@@ -24,6 +24,8 @@ while [ $# -gt 0 ]; do
   shift
 done
 
+# SYNC ########################
+
 if [[ $ARG_ACTION == "sync" ]]; then
   echo "Syncing from vagrant to web directory"
   SOURCE="/vagrant/www/$ARG_FOLDER/"
@@ -37,6 +39,8 @@ SYNC
 
   #/VAGRANT SSH
 fi
+
+# VHOST ########################
 
 if [[ $ARG_ACTION == "vhost" ]]; then
   # REQURED PARAMS:
@@ -66,4 +70,47 @@ VHOST
   LOCAL_DOMAIN="vagrant-$ARG_SHORTNAME.local"
   HOSTS_LINE="$VM_IP  $LOCAL_DOMAIN"
   $(grep "$HOSTS_LINE" /etc/hosts) || sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts"
+fi
+
+# VHOST-RM ########################
+
+if [[ $ARG_ACTION == "vhost-rm" ]]; then
+  # REQURED PARAMS:
+  # --action=vhost
+  # --shortname=
+  # --folder=
+  # cp vhost-template.conf to new site conf
+  SITE_CONF="vagrant-$ARG_SHORTNAME.local.conf"
+
+vagrant ssh -- -T << VHOST
+# enable the newly created site/vhost
+sudo a2dissite $SITE_CONF
+# reload apache2 so vhosts take effect
+sudo service apache2 restart
+# remove new site conf from /etc/apache2/sites-available
+sudo rm /etc/apache2/sites-available/$SITE_CONF
+VHOST
+fi
+
+# DBCREATE ########################
+
+if [[ $ARG_ACTION == "dbcreate" ]]; then
+  # REQURED PARAMS:
+  # --action=vhost
+  # --shortname=
+  # --folder=
+
+  vagrant ssh -- -T << DBCREATE
+echo "Creating database, user, and password"
+mysql -u root -proot -t << MYSQL
+
+DROP DATABASE IF EXISTS $ARG_SHORTNAME;
+CREATE DATABASE $ARG_SHORTNAME COLLATE 'utf8_general_ci';
+GRANT ALL PRIVILEGES ON $ARG_SHORTNAME.* TO '$ARG_SHORTNAME'@'localhost';
+SET old_passwords = 0;
+SET PASSWORD FOR '$ARG_SHORTNAME'@'localhost' = PASSWORD('$ARG_SHORTNAME');
+FLUSH PRIVILEGES;
+
+MYSQL
+DBCREATE
 fi
