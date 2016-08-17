@@ -25,7 +25,9 @@ while [ $# -gt 0 ]; do
 done
 
 # SYNC ########################
-
+# REQURED PARAMS:
+# --action=sync
+# --folder=[folder]
 if [[ $ARG_ACTION == "sync" ]]; then
   echo "Syncing from vagrant to web directory"
   SOURCE="/vagrant/www/$ARG_FOLDER/"
@@ -40,13 +42,27 @@ SYNC
   #/VAGRANT SSH
 fi
 
-# VHOST ########################
+# RMDIR ########################
+# REQURED PARAMS:
+# --action=vhost
+# --folder=[folder]
+if [[ $ARG_ACTION == "rmdir" ]]; then
+  echo "Removing dir from web directory"
 
+  echo "#################################"
+  vagrant ssh -- -T << RMDIR
+  cd /var/www
+  sudo rm -rf $ARG_FOLDER
+RMDIR
+  echo "#################################"
+fi
+
+# VHOST ########################
+# REQURED PARAMS:
+# --action=vhost
+# --shortname=[shortname]
+# --folder=[folder]
 if [[ $ARG_ACTION == "vhost" ]]; then
-  # REQURED PARAMS:
-  # --action=vhost
-  # --shortname=
-  # --folder=
   # cp vhost-template.conf to new site conf
   SITE_CONF="vagrant-$ARG_SHORTNAME.local.conf"
   cp vhost-template.conf $SITE_CONF
@@ -73,13 +89,10 @@ VHOST
 fi
 
 # VHOST-RM ########################
-
+# REQURED PARAMS:
+# --action=vhost
+# --shortname=[shortname]
 if [[ $ARG_ACTION == "vhost-rm" ]]; then
-  # REQURED PARAMS:
-  # --action=vhost
-  # --shortname=
-  # --folder=
-  # cp vhost-template.conf to new site conf
   SITE_CONF="vagrant-$ARG_SHORTNAME.local.conf"
 
 vagrant ssh -- -T << VHOST
@@ -93,12 +106,10 @@ VHOST
 fi
 
 # DBCREATE ########################
-
+# REQURED PARAMS:
+# --action=vhost
+# --shortname=[shortname]
 if [[ $ARG_ACTION == "dbcreate" ]]; then
-  # REQURED PARAMS:
-  # --action=vhost
-  # --shortname=
-  # --folder=
 
   vagrant ssh -- -T << DBCREATE
 echo "Creating database, user, and password"
