@@ -167,6 +167,10 @@ php:
         php:
             - cli
             - intl
+            - dom
+            - gd
+            - SimpleXML
+            - xml
         pear: {  }
         pecl: {  }
     ini:

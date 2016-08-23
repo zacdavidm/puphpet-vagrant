@@ -105,9 +105,33 @@ sudo rm /etc/apache2/sites-available/$SITE_CONF
 VHOST
 fi
 
+# FIXPERMS ########################
+# REQURED PARAMS:
+# --action=fixperms
+# --folder=[folder]
+if [[ $ARG_ACTION == "fixperms" ]]; then
+
+vagrant ssh -- -T << FIXPERMS
+
+cd /var/www/$ARG_FOLDER
+sudo chown -R root:www-data .
+find . -type d -exec sudo chmod u=rwx,g=rx,o= '{}' \;
+find . -type f -exec sudo chmod u=rw,g=r,o= '{}' \;
+
+cd sites
+find . -type d -name files -exec sudo chmod ug=rwx,o= '{}' \;
+for d in ./*/files
+do
+   find $d -type d -exec sudo chmod ug=rwx,o= '{}' \;
+   find $d -type f -exec sudo chmod ug=rw,o= '{}' \;
+done
+
+FIXPERMS
+fi
+
 # DBCREATE ########################
 # REQURED PARAMS:
-# --action=vhost
+# --action=dbcreate
 # --shortname=[shortname]
 if [[ $ARG_ACTION == "dbcreate" ]]; then
 
@@ -120,6 +144,23 @@ CREATE DATABASE $ARG_SHORTNAME COLLATE 'utf8_general_ci';
 GRANT ALL PRIVILEGES ON $ARG_SHORTNAME.* TO '$ARG_SHORTNAME'@'localhost';
 SET old_passwords = 0;
 SET PASSWORD FOR '$ARG_SHORTNAME'@'localhost' = PASSWORD('$ARG_SHORTNAME');
+FLUSH PRIVILEGES;
+
+MYSQL
+DBCREATE
+fi
+
+# DBDELETE ########################
+# REQURED PARAMS:
+# --action=dbdelete
+# --shortname=[shortname]
+if [[ $ARG_ACTION == "dbdelete" ]]; then
+
+  vagrant ssh -- -T << DBCREATE
+echo "Creating database, user, and password"
+mysql -u root -proot -t << MYSQL
+
+DROP DATABASE IF EXISTS $ARG_SHORTNAME;
 FLUSH PRIVILEGES;
 
 MYSQL
