@@ -20,6 +20,9 @@ while [ $# -gt 0 ]; do
   "shortname")
     ARG_SHORTNAME=$VALUE
     ;;
+  "dbfile")
+    ARG_DBFILE=$VALUE
+    ;;
   esac
   shift
 done
@@ -148,6 +151,24 @@ FLUSH PRIVILEGES;
 
 MYSQL
 DBCREATE
+fi
+
+# DBIMPORT ########################
+# REQURED PARAMS:
+# --action=dbimport
+# --shortname=[shortname]
+# --dbfile=[db_file_name.sql]
+if [[ $ARG_ACTION == "dbimport" ]]; then
+
+  vagrant ssh -- -T << DBIMPORT
+echo "Importing database"
+mysql -u root -proot -t << MYSQL
+
+USE DATABASE $ARG_SHORTNAME;
+SOURCE /vagrant/files/$ARG_DBFILE;
+
+MYSQL
+DBIMPORT
 fi
 
 # DBDELETE ########################
