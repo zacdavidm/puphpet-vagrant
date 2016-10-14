@@ -164,7 +164,7 @@ if [[ $ARG_ACTION == "dbimport" ]]; then
 echo "Importing database"
 mysql -u root -proot -t << MYSQL
 
-USE DATABASE $ARG_SHORTNAME;
+USE $ARG_SHORTNAME;
 SOURCE /vagrant/files/$ARG_DBFILE;
 
 MYSQL
