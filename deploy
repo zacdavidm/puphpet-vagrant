@@ -88,7 +88,10 @@ VHOST
   echo $VM_IP
   LOCAL_DOMAIN="vagrant-$ARG_SHORTNAME.local"
   HOSTS_LINE="$VM_IP  $LOCAL_DOMAIN"
-  $(grep "$HOSTS_LINE" /etc/hosts) || sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts"
+  if ! grep -c "$HOSTS_LINE" /etc/hosts; then
+    echo "Adding line to /etc/hosts: $HOSTS_LINE"
+    sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts"
+  fi;
 fi
 
 # VHOST-RM ########################
